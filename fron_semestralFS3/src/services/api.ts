@@ -2,50 +2,53 @@ import { Alerta, Usuario, ZonaMonitoreo, Historial, Reporte, ReporteBackend } fr
 
 const API_BASE_URL = `http://${window.location.hostname}:9090`; 
 
-// Función auxiliar para obtener las cabeceras incluyendo la forma de enviar el token (Bearer)
 const getAuthHeaders = () => {
   const token = localStorage.getItem('vsol_token');
   return {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}) // FORMATO PORTADOR (BEARER)
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
   };
 };
 
+// --- MOCK DATA ---
+const mockReportes: ReporteBackend[] = [
+  { id: "1", descripcion: "Humo avistado cerca del cerro San Cristóbal", latitud: -33.425, longitud: -70.633, urlImagen: "", urlVideo: "", estado: "PENDIENTE", fechaReporte: new Date().toISOString() },
+  { id: "2", descripcion: "Fuego en pastizales sector norte", latitud: -33.395, longitud: -70.650, urlImagen: "", urlVideo: "", estado: "EN_PROCESO", fechaReporte: new Date(Date.now() - 86400000).toISOString() }
+];
+
+const mockAlertas: Alerta[] = [
+  { id: 101, tipoAlerta: "INCENDIO_FORESTAL", mensaje: "Incendio detectado por sensor térmico", severidad: "CRITICAL", fechaCreacion: new Date().toISOString() },
+  { id: 102, tipoAlerta: "FOCO_CALOR", mensaje: "Aumento inusual de temperatura en zona 4", severidad: "HIGH", fechaCreacion: new Date(Date.now() - 3600000).toISOString() }
+];
+
+const mockZonas: ZonaMonitoreo[] = [
+  { id: 1, nombreZona: "Sector Bosque Nativo", latitud: -33.42, longitud: -70.62, nivelRiesgo: "ALTO", brigadaActiva: true },
+  { id: 2, nombreZona: "Perímetro Urbano", latitud: -33.45, longitud: -70.66, nivelRiesgo: "MEDIO", brigadaActiva: false },
+  { id: 3, nombreZona: "Reserva Nacional", latitud: -33.50, longitud: -70.55, nivelRiesgo: "BAJO", brigadaActiva: true }
+];
+
+const mockHistorial: Historial[] = [
+  { id: 1, ubicación: "Cerro Manquehue", causaProbable: "Desconocida", fechaInicio: new Date(Date.now() - 172800000).toISOString(), fechaFin: new Date(Date.now() - 86400000).toISOString(), hectareasAfectadas: 15 },
+  { id: 2, ubicación: "Quebrada de Macul", causaProbable: "Fogata mal apagada", fechaInicio: new Date(Date.now() - 500000000).toISOString(), fechaFin: new Date(Date.now() - 400000000).toISOString(), hectareasAfectadas: 5 }
+];
+
 // --- REPORTES ---
 export const obtenerReportes = async (): Promise<ReporteBackend[]> => {
-  const response = await fetch(`${API_BASE_URL}/reportes`, {
-    headers: getAuthHeaders()
-  });
-  if (!response.ok) throw new Error('Error al obtener reportes');
-  return await response.json();
+  return Promise.resolve(mockReportes);
 };
 
 export const crearReporte = async (nuevoReporte: ReporteBackend): Promise<ReporteBackend> => {
-  const response = await fetch(`${API_BASE_URL}/reportes`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(nuevoReporte),
-  });
-  if (!response.ok) throw new Error('Error al crear el reporte');
-  return await response.json();
+  const reporte = { ...nuevoReporte, id: Math.random().toString() };
+  mockReportes.push(reporte);
+  return Promise.resolve(reporte);
 };
 
 export const eliminarReporte = async (id: number | string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/reportes/${id}`, {
-    method: 'DELETE',
-    headers: getAuthHeaders()
-  });
-  if (!response.ok) throw new Error('Error al eliminar el reporte');
+  return Promise.resolve();
 };
 
 export const actualizarReporte = async (reporte: ReporteBackend): Promise<ReporteBackend> => {
-  const response = await fetch(`${API_BASE_URL}/reportes/${reporte.id}`, {
-    method: 'PUT',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(reporte),
-  });
-  if (!response.ok) throw new Error('Error al actualizar el reporte');
-  return await response.json();
+  return Promise.resolve(reporte);
 };
 
 // --- ALERTAS E HISTORIAL ---
@@ -56,87 +59,52 @@ export const finalizarAlertaYCrearHistorial = async (
   hectareas: number,
   fechaInicioIncidente: string
 ): Promise<void> => {
-  const nuevoHistorial = {
+  mockHistorial.push({
+    id: Math.random(),
     ubicación: ubicacion,
     causaProbable: causa,
     fechaInicio: new Date(fechaInicioIncidente).toISOString(),
     fechaFin: new Date().toISOString(),
     hectareasAfectadas: hectareas
-  };
-
-  const respuestaHistorial = await fetch(`${API_BASE_URL}/historial`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(nuevoHistorial),
   });
-
-  if (!respuestaHistorial.ok) throw new Error('Error al generar el historial');
-
-  try {
-    await fetch(`${API_BASE_URL}/alertas/${alertaId}`, { 
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-  } catch (error) {
-    console.warn("Fallo el borrado de alerta", error);
-  }
+  return Promise.resolve();
 };
 
 // --- OBJETO API ---
 export const api = {
-  // USUARIOS: Autenticación (¿Quién eres?)
-  // Nota: Dejamos el retorno dinámico ya que ahora devuelve { email, rol, token }
+  // USUARIOS: Login real conectando a AWS
   login: async (email: string, password: string): Promise<any> => {
     const response = await fetch(`${API_BASE_URL}/usuarios/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }, // Login no lleva token porque apenas lo va a obtener
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
     if (!response.ok) throw new Error('Credenciales inválidas');
     
     const data = await response.json();
-    
-    // Almacenamos la credencial digital entregada por el backend
     if (data.token) {
       localStorage.setItem('vsol_token', data.token);
     }
-    
     return data;
   },
 
-  // ALERTAS
+  // ALERTAS (MOCK)
   getAlertas: async (): Promise<Alerta[]> => {
-    const response = await fetch(`${API_BASE_URL}/alertas`, {
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) throw new Error('Error al obtener alertas');
-    return response.json();
+    return Promise.resolve(mockAlertas);
   },
 
-  // MONITOREO
+  // MONITOREO (MOCK)
   getZonas: async (): Promise<ZonaMonitoreo[]> => {
-    const response = await fetch(`${API_BASE_URL}/monitoreo`, {
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) throw new Error('Error al obtener zonas');
-    return response.json();
+    return Promise.resolve(mockZonas);
   },
 
-  // HISTORIAL
+  // HISTORIAL (MOCK)
   getHistorial: async (): Promise<Historial[]> => {
-    const response = await fetch(`${API_BASE_URL}/historial`, {
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) throw new Error('Error al obtener historial');
-    return response.json();
+    return Promise.resolve(mockHistorial);
   },
 
-  // REPORTES
+  // REPORTES (MOCK)
   getReportes: async (): Promise<ReporteBackend[]> => {
-    const response = await fetch(`${API_BASE_URL}/reportes`, {
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) throw new Error('Error al obtener reportes');
-    return response.json();
+    return Promise.resolve(mockReportes);
   }
 };

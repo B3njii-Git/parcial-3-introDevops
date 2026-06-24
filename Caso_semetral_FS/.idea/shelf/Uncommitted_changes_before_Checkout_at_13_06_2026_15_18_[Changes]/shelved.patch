@@ -1,0 +1,643 @@
+Index: bomberos/docker-compose.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>services:\r\n  # 1. El Directorio (Debe iniciar primero)\r\n  eureka-server:\r\n    build: ./eureka-server\r\n    container_name: eureka-server\r\n    ports:\r\n      - \"8761:8761\"\r\n    environment:\r\n      SERVER_PORT: 8761\r\n    healthcheck:\r\n      test: [ \"CMD-SHELL\", \"curl -f http://localhost:8761/ || exit 1\" ]\r\n      interval: 30s\r\n      timeout: 10s\r\n      retries: 10\r\n      start_period: 60s\r\n    restart: unless-stopped\r\n    networks:\r\n      - bomberos-net\r\n\r\n  # 2. API Gateway\r\n  api-gateway:\r\n    build: ./api-gateway\r\n    container_name: api-gateway-service\r\n    ports:\r\n      - \"9090:9090\"\r\n    environment:\r\n      SERVER_PORT: 9090\r\n      EUREKA_URL: http://eureka-server:8761/eureka/\r\n    depends_on:\r\n      eureka-server:\r\n        condition: service_healthy\r\n    healthcheck:\r\n      test: [\"CMD-SHELL\", \"curl -f http://localhost:9090/actuator/health || exit 1\"]\r\n      interval: 10s\r\n      timeout: 5s\r\n      retries: 10\r\n    restart: unless-stopped\r\n    networks:\r\n      - bomberos-net\r\n\r\n  # 3. Servicio de Usuarios\r\n  usuarios:\r\n    build: ./usuarios\r\n    container_name: usuarios-service\r\n    ports:\r\n      - \"8081:8081\"\r\n    environment:\r\n      SERVER_PORT: 8081\r\n      EUREKA_URL: http://eureka-server:8761/eureka/\r\n    depends_on:\r\n      eureka-server:\r\n        condition: service_healthy\r\n    healthcheck:\r\n      test: [\"CMD-SHELL\", \"curl -f http://localhost:8081/actuator/health || exit 1\"]\r\n      interval: 10s\r\n      timeout: 5s\r\n      retries: 10\r\n    restart: unless-stopped\r\n    networks:\r\n      - bomberos-net\r\n\r\n  # 4. Servicio de Reportes\r\n  reportes:\r\n    build: ./reportes\r\n    container_name: reportes-service\r\n    ports:\r\n      - \"8080:8080\"\r\n    environment:\r\n      SERVER_PORT: 8080\r\n      EUREKA_URL: http://eureka-server:8761/eureka/\r\n    depends_on:\r\n      eureka-server:\r\n        condition: service_healthy\r\n    healthcheck:\r\n      test: [\"CMD-SHELL\", \"curl -f http://localhost:8080/actuator/health || exit 1\"]\r\n      interval: 10s\r\n      timeout: 5s\r\n      retries: 10\r\n    restart: unless-stopped\r\n    networks:\r\n      - bomberos-net\r\n\r\n  # 5. Servicio de Monitoreo\r\n  monitoreo:\r\n    build: ./monitoreo\r\n    container_name: monitoreo-service\r\n    ports:\r\n      - \"8082:8082\"\r\n    environment:\r\n      SERVER_PORT: 8082\r\n      EUREKA_URL: http://eureka-server:8761/eureka/\r\n    depends_on:\r\n      eureka-server:\r\n        condition: service_healthy\r\n    healthcheck:\r\n      test: [\"CMD-SHELL\", \"curl -f http://localhost:8082/actuator/health || exit 1\"]\r\n      interval: 10s\r\n      timeout: 5s\r\n      retries: 10\r\n    restart: unless-stopped\r\n    networks:\r\n      - bomberos-net\r\n\r\n  # 6. Servicio de Alertas\r\n  alertas:\r\n    build: ./alertas\r\n    container_name: alertas-service\r\n    ports:\r\n      - \"8083:8083\"\r\n    environment:\r\n      SERVER_PORT: 8083\r\n      EUREKA_URL: http://eureka-server:8761/eureka/\r\n    depends_on:\r\n      eureka-server:\r\n        condition: service_healthy\r\n    healthcheck:\r\n      test: [\"CMD-SHELL\", \"curl -f http://localhost:8083/actuator/health || exit 1\"]\r\n      interval: 10s\r\n      timeout: 5s\r\n      retries: 10\r\n    restart: unless-stopped\r\n    networks:\r\n      - bomberos-net\r\n\r\n  # 7. Servicio de Historial\r\n  historial:\r\n    build: ./historial\r\n    container_name: historial-service\r\n    ports:\r\n      - \"8084:8084\"\r\n    environment:\r\n      SERVER_PORT: 8084\r\n      EUREKA_URL: http://eureka-server:8761/eureka/\r\n    depends_on:\r\n      eureka-server:\r\n        condition: service_healthy\r\n    healthcheck:\r\n      test: [\"CMD-SHELL\", \"curl -f http://localhost:8084/actuator/health || exit 1\"]\r\n      interval: 10s\r\n      timeout: 5s\r\n      retries: 10\r\n    restart: unless-stopped\r\n    networks:\r\n      - bomberos-net\r\n\r\nnetworks:\r\n  bomberos-net:\r\n    driver: bridge
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/docker-compose.yml b/bomberos/docker-compose.yml
+--- a/bomberos/docker-compose.yml	(revision a9cdb7761f11b9eaca6a896726b080421634105f)
++++ b/bomberos/docker-compose.yml	(date 1781114067888)
+@@ -68,6 +68,7 @@
+     environment:
+       SERVER_PORT: 8080
+       EUREKA_URL: http://eureka-server:8761/eureka/
++      RABBITMQ_HOST: rabbitmq
+     depends_on:
+       eureka-server:
+         condition: service_healthy
+@@ -110,6 +111,7 @@
+     environment:
+       SERVER_PORT: 8083
+       EUREKA_URL: http://eureka-server:8761/eureka/
++      RABBITMQ_HOST: rabbitmq
+     depends_on:
+       eureka-server:
+         condition: service_healthy
+@@ -131,6 +133,7 @@
+     environment:
+       SERVER_PORT: 8084
+       EUREKA_URL: http://eureka-server:8761/eureka/
++      RABBITMQ_HOST: rabbitmq
+     depends_on:
+       eureka-server:
+         condition: service_healthy
+@@ -142,6 +145,26 @@
+     restart: unless-stopped
+     networks:
+       - bomberos-net
++
++  # 8. RabbitMQ Message Broker
++  rabbitmq:
++    image: rabbitmq:3-management
++    container_name: rabbitmq-broker
++    ports:
++      - "5672:5672"
++      - "15672:15672"
++    environment:
++      RABBITMQ_DEFAULT_USER: guest
++      RABBITMQ_DEFAULT_PASS: guest
++    healthcheck:
++      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
++      interval: 30s
++      timeout: 10s
++      retries: 5
++      start_period: 20s
++    restart: unless-stopped
++    networks:
++      - bomberos-net
+ 
+ networks:
+   bomberos-net:
+Index: bomberos/alertas/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n\t\t xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n\t<modelVersion>4.0.0</modelVersion>\r\n\t<parent>\r\n\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\r\n\t\t<version>3.2.3</version> <relativePath/>\r\n\t</parent>\r\n\t<groupId>com.bomberos</groupId>\r\n\t<artifactId>alertas</artifactId>\r\n\t<version>0.0.1-SNAPSHOT</version>\r\n\t<name>servicio-alertas</name>\r\n\r\n\t<properties>\r\n\t\t<java.version>21</java.version>\r\n\t\t<java.version>21</java.version>\r\n\t\t<spring-cloud.version>2023.0.0</spring-cloud.version>\r\n\t</properties>\r\n\r\n\t<dependencies>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-data-jpa</artifactId>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-validation</artifactId>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.cloud</groupId>\r\n\t\t\t<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>\r\n\t\t\t<version>4.1.0</version>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-web</artifactId>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.postgresql</groupId>\r\n\t\t\t<artifactId>postgresql</artifactId>\r\n\t\t\t<scope>runtime</scope>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-test</artifactId>\r\n\t\t\t<scope>test</scope>\r\n\t\t</dependency>\r\n        <dependency>\r\n            <groupId>org.springframework.cloud</groupId>\r\n            <artifactId>spring-cloud-commons</artifactId>\r\n            <version>5.0.1</version>\r\n            <scope>compile</scope>\r\n        </dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springdoc</groupId>\r\n\t\t\t<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>\r\n\t\t\t<version>2.3.0</version>\r\n\t\t</dependency>\r\n    </dependencies>\r\n\r\n\t<build>\r\n\t\t<plugins>\r\n\t\t\t<plugin>\r\n\t\t\t\t<groupId>org.jacoco</groupId>\r\n\t\t\t\t<artifactId>jacoco-maven-plugin</artifactId>\r\n\t\t\t\t<version>0.8.12</version>\r\n\t\t\t\t<configuration>\r\n\t\t\t\t\t<excludes>\r\n\t\t\t\t\t\t<!-- Ajusta estos paquetes al nombre de TU proyecto -->\r\n\t\t\t\t\t\t<exclude>cl/duoc/tuprojecto/TuClaseApplication.class</exclude>\r\n\t\t\t\t\t\t<exclude>cl/duoc/tuprojecto/controller/*.class</exclude>\r\n\t\t\t\t\t</excludes>\r\n\t\t\t\t</configuration>\r\n\t\t\t\t<executions>\r\n\t\t\t\t\t<execution>\r\n\t\t\t\t\t\t<id>prepare-agent</id>\r\n\t\t\t\t\t\t<goals><goal>prepare-agent</goal></goals>\r\n\t\t\t\t\t</execution>\r\n\t\t\t\t\t<execution>\r\n\t\t\t\t\t\t<id>report</id>\r\n\t\t\t\t\t\t<phase>test</phase>\r\n\t\t\t\t\t\t<goals><goal>report</goal></goals>\r\n\t\t\t\t\t</execution>\r\n\t\t\t\t\t<execution>\r\n\t\t\t\t\t\t<id>check-coverage</id>\r\n\t\t\t\t\t\t<phase>verify</phase>\r\n\t\t\t\t\t\t<goals><goal>check</goal></goals>\r\n\t\t\t\t\t\t<configuration>\r\n\t\t\t\t\t\t\t<rules>\r\n\t\t\t\t\t\t\t\t<rule>\r\n\t\t\t\t\t\t\t\t\t<element>BUNDLE</element>\r\n\t\t\t\t\t\t\t\t\t<limits>\r\n\t\t\t\t\t\t\t\t\t\t<limit>\r\n\t\t\t\t\t\t\t\t\t\t\t<counter>LINE</counter>\r\n\t\t\t\t\t\t\t\t\t\t\t<value>COVEREDRATIO</value>\r\n\t\t\t\t\t\t\t\t\t\t\t<minimum>0.80</minimum>\r\n\t\t\t\t\t\t\t\t\t\t</limit>\r\n\t\t\t\t\t\t\t\t\t\t<limit>\r\n\t\t\t\t\t\t\t\t\t\t\t<counter>BRANCH</counter>\r\n\t\t\t\t\t\t\t\t\t\t\t<value>COVEREDRATIO</value>\r\n\t\t\t\t\t\t\t\t\t\t\t<minimum>0.80</minimum>\r\n\t\t\t\t\t\t\t\t\t\t</limit>\r\n\t\t\t\t\t\t\t\t\t</limits>\r\n\t\t\t\t\t\t\t\t</rule>\r\n\t\t\t\t\t\t\t</rules>\r\n\t\t\t\t\t\t</configuration>\r\n\t\t\t\t\t</execution>\r\n\t\t\t\t</executions>\r\n\t\t\t</plugin>\r\n\t\t\t<plugin>\r\n\t\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\r\n\t\t\t</plugin>\r\n\t\t</plugins>\r\n\t</build>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/alertas/pom.xml b/bomberos/alertas/pom.xml
+--- a/bomberos/alertas/pom.xml	(revision a9cdb7761f11b9eaca6a896726b080421634105f)
++++ b/bomberos/alertas/pom.xml	(date 1781115661861)
+@@ -37,6 +37,14 @@
+ 			<artifactId>spring-boot-starter-web</artifactId>
+ 		</dependency>
+ 		<dependency>
++			<groupId>org.springframework.boot</groupId>
++			<artifactId>spring-boot-starter-amqp</artifactId>
++		</dependency>
++		<dependency>
++			<groupId>org.springframework.boot</groupId>
++			<artifactId>spring-boot-starter-mail</artifactId>
++		</dependency>
++		<dependency>
+ 			<groupId>org.postgresql</groupId>
+ 			<artifactId>postgresql</artifactId>
+ 			<scope>runtime</scope>
+Index: bomberos/alertas/src/main/resources/application.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>server:\r\n  port: ${SERVER_PORT:8083}\r\n\r\nspring:\r\n  application:\r\n    name: ms-alertas\r\n  cloud:\r\n    compatibility-verifier:\r\n      enabled: false\r\n  datasource:\r\n    url: jdbc:postgresql://aws-1-us-east-1.pooler.supabase.com:5432/postgres\r\n    username: postgres.geijpkyhyeguxhsoynvv\r\n    password: frMQ_-FQyG9J5Ep\r\n    driver-class-name: org.postgresql.Driver\r\n    hikari:\r\n      maximum-pool-size: 2\r\n      minimum-idle: 1\r\n      idle-timeout: 10000\r\n  jpa:\r\n    show-sql: true\r\n    hibernate:\r\n      ddl-auto: update\r\n    properties:\r\n      hibernate:\r\n        dialect: org.hibernate.dialect.PostgreSQLDialect\r\n\r\neureka:\r\n  client:\r\n    service-url:\r\n      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}\r\n  instance:\r\n    prefer-ip-address: true\r\n\r\nmanagement:\r\n  endpoints:\r\n    web:\r\n      exposure:\r\n        include: health,info\r\n  endpoint:\r\n    health:\r\n      show-details: always
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/alertas/src/main/resources/application.yml b/bomberos/alertas/src/main/resources/application.yml
+--- a/bomberos/alertas/src/main/resources/application.yml	(revision a9cdb7761f11b9eaca6a896726b080421634105f)
++++ b/bomberos/alertas/src/main/resources/application.yml	(date 1781115661878)
+@@ -2,6 +2,22 @@
+   port: ${SERVER_PORT:8083}
+ 
+ spring:
++  rabbitmq:
++    host: ${RABBITMQ_HOST:localhost}
++    port: ${RABBITMQ_PORT:5672}
++    username: ${RABBITMQ_USER:guest}
++    password: ${RABBITMQ_PASS:guest}
++  mail:
++    host: smtp.gmail.com
++    port: 587
++    username: tu_correo@gmail.com
++    password: tu_password_de_aplicacion_aqui
++    properties:
++      mail:
++        smtp:
++          auth: true
++          starttls:
++            enable: true
+   application:
+     name: ms-alertas
+   cloud:
+Index: bomberos/reportes/src/main/java/com/bomberos/reportes/controller/ReporteController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.bomberos.reportes.controller;\r\n\r\nimport com.bomberos.reportes.dto.ReporteRequestDTO;\r\nimport com.bomberos.reportes.dto.ReporteResponseDTO;\r\nimport com.bomberos.reportes.model.Reporte;\r\nimport com.bomberos.reportes.service.ReporteService;\r\nimport jakarta.validation.Valid;\r\nimport org.springframework.beans.factory.annotation.Autowired;\r\nimport org.springframework.http.ResponseEntity;\r\nimport org.springframework.web.bind.annotation.*;\r\n\r\nimport java.util.List;\r\nimport java.util.UUID;\r\n\r\n@RestController\r\n@RequestMapping(\"/reportes\")\r\npublic class ReporteController {\r\n\r\n    @Autowired\r\n    private ReporteService reporteService;\r\n\r\n    @GetMapping\r\n    public ResponseEntity<List<ReporteResponseDTO>> listarReportes() {\r\n        return ResponseEntity.ok(reporteService.obtenerTodos());\r\n    }\r\n\r\n    @PostMapping\r\n    public ResponseEntity<ReporteResponseDTO> crearReporte(@RequestBody ReporteRequestDTO request) {\r\n        return ResponseEntity.ok(reporteService.crearReporte(request));\r\n    }\r\n\r\n    @DeleteMapping(\"/{id}\")\r\n    public ResponseEntity<Void> eliminarReporte(@PathVariable String id) {\r\n        reporteService.eliminarReporte(id);\r\n        return ResponseEntity.noContent().build();\r\n    }\r\n\r\n    @PutMapping(\"/{id}\")\r\n    public ResponseEntity<ReporteResponseDTO> actualizarReporte(@PathVariable String id, @RequestBody ReporteRequestDTO requestDTO) {\r\n        ReporteResponseDTO actualizado = reporteService.actualizarReporte(id, requestDTO);\r\n        return ResponseEntity.ok(actualizado);\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/reportes/src/main/java/com/bomberos/reportes/controller/ReporteController.java b/bomberos/reportes/src/main/java/com/bomberos/reportes/controller/ReporteController.java
+--- a/bomberos/reportes/src/main/java/com/bomberos/reportes/controller/ReporteController.java	(revision a9cdb7761f11b9eaca6a896726b080421634105f)
++++ b/bomberos/reportes/src/main/java/com/bomberos/reportes/controller/ReporteController.java	(date 1781111593977)
+@@ -12,6 +12,8 @@
+ import java.util.List;
+ import java.util.UUID;
+ 
++import com.bomberos.reportes.messaging.ReporteProducer;
++
+ @RestController
+ @RequestMapping("/reportes")
+ public class ReporteController {
+@@ -19,6 +21,9 @@
+     @Autowired
+     private ReporteService reporteService;
+ 
++    @Autowired
++    private ReporteProducer reporteProducer;
++
+     @GetMapping
+     public ResponseEntity<List<ReporteResponseDTO>> listarReportes() {
+         return ResponseEntity.ok(reporteService.obtenerTodos());
+@@ -26,7 +31,9 @@
+ 
+     @PostMapping
+     public ResponseEntity<ReporteResponseDTO> crearReporte(@RequestBody ReporteRequestDTO request) {
+-        return ResponseEntity.ok(reporteService.crearReporte(request));
++        ReporteResponseDTO response = reporteService.crearReporte(request);
++        reporteProducer.enviarReporteCreado("Se ha creado un nuevo reporte: " + response.toString());
++        return ResponseEntity.ok(response);
+     }
+ 
+     @DeleteMapping("/{id}")
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"736d2750-17bc-4bca-89a5-50cdba288114\" name=\"Changes\" comment=\"\">\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/.gitignore\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/copilot.data.migration.ask2agent.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/discord.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/misc.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/misc.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/.idea/bomberos.iml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/.idea/compiler.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/.idea/dataSources.local.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/.idea/dataSources.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/.idea/encodings.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/.idea/jarRepositories.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/.idea/misc.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/.idea/modules.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/.idea/vcs.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/reportes/src/test/java/com/bomberos/reportes/ReporteControllerTest.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/bomberos/reportes/src/test/java/com/bomberos/reportes/ReporteControllerTest.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/reportes/src/test/java/com/bomberos/reportes/ReporteServiceTest.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/bomberos/reportes/src/test/java/com/bomberos/reportes/ReporteServiceTest.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/bomberos/usuarios/pom.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/bomberos/usuarios/pom.xml\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"KubernetesApiPersistence\">{}</component>\r\n  <component name=\"KubernetesApiProvider\">{\r\n  &quot;isMigrated&quot;: true\r\n}</component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;customColor&quot;: &quot;&quot;,\r\n  &quot;associatedIndex&quot;: 6\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"3C0TgitxMcHLZu99f7YaaSynHwm\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\"><![CDATA[{\r\n  \"keyToString\": {\r\n    \"JUnit.AlertaControllerTest.executor\": \"Run\",\r\n    \"JUnit.AlertasApplicationTests.executor\": \"Run\",\r\n    \"JUnit.ProductosfsApplicationTests.executor\": \"Run\",\r\n    \"JUnit.ReporteControllerTest.executor\": \"Run\",\r\n    \"JUnit.ReporteServiceTest.executor\": \"Run\",\r\n    \"JUnit.UsuarioControllerTest.executor\": \"Run\",\r\n    \"JUnit.UsuarioServiceTest.executor\": \"Run\",\r\n    \"JUnit.UsuariosApplicationTests.executor\": \"Run\",\r\n    \"Maven.alertas [clean].executor\": \"Run\",\r\n    \"Maven.alertas [test].executor\": \"Run\",\r\n    \"Maven.alertas [verify].executor\": \"Run\",\r\n    \"Maven.historial [clean].executor\": \"Run\",\r\n    \"Maven.historial [test].executor\": \"Run\",\r\n    \"Maven.historial [verify].executor\": \"Run\",\r\n    \"Maven.monitoreo [clean].executor\": \"Run\",\r\n    \"Maven.monitoreo [test].executor\": \"Run\",\r\n    \"Maven.monitoreo [verify].executor\": \"Run\",\r\n    \"Maven.reportes [clean].executor\": \"Run\",\r\n    \"Maven.reportes [test].executor\": \"Run\",\r\n    \"Maven.reportes [verify].executor\": \"Run\",\r\n    \"Maven.usuarios [clean].executor\": \"Run\",\r\n    \"Maven.usuarios [test].executor\": \"Run\",\r\n    \"Maven.usuarios [verify].executor\": \"Run\",\r\n    \"ModuleVcsDetector.initialDetectionPerformed\": \"true\",\r\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\r\n    \"RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager\": \"true\",\r\n    \"RunOnceActivity.git.unshallow\": \"true\",\r\n    \"git-widget-placeholder\": \"main\",\r\n    \"node.js.detected.package.eslint\": \"true\",\r\n    \"node.js.detected.package.tslint\": \"true\",\r\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\r\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\r\n    \"nodejs_package_manager_path\": \"npm\",\r\n    \"project.structure.last.edited\": \"Project\",\r\n    \"project.structure.proportion\": \"0.0\",\r\n    \"project.structure.side.proportion\": \"0.0\",\r\n    \"run.configurations.included.in.services\": \"true\",\r\n    \"vue.rearranger.settings.migration\": \"true\"\r\n  }\r\n}]]></component>\r\n  <component name=\"RunDashboard\">\r\n    <option name=\"configurationTypes\">\r\n      <set>\r\n        <option value=\"KtorApplicationConfigurationType\" />\r\n        <option value=\"MicronautRunConfigurationType\" />\r\n        <option value=\"QuarkusRunConfigurationType\" />\r\n        <option value=\"SpringBootApplicationConfigurationType\" />\r\n      </set>\r\n    </option>\r\n  </component>\r\n  <component name=\"RunManager\" selected=\"JUnit.UsuarioServiceTest\">\r\n    <configuration name=\"ProductosfsApplicationTests\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"reportes\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.bomberos.reportes.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <option name=\"PACKAGE_NAME\" value=\"com.bomberos.reportes\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.bomberos.reportes.ProductosfsApplicationTests\" />\r\n      <option name=\"TEST_OBJECT\" value=\"class\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"ReporteServiceTest\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"reportes\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.bomberos.reportes.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <option name=\"PACKAGE_NAME\" value=\"com.bomberos.reportes\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.bomberos.reportes.ReporteServiceTest\" />\r\n      <option name=\"TEST_OBJECT\" value=\"class\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"UsuarioControllerTest\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"usuarios\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.bomberos.usuarios.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <option name=\"PACKAGE_NAME\" value=\"com.bomberos.usuarios\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.bomberos.usuarios.UsuarioControllerTest\" />\r\n      <option name=\"TEST_OBJECT\" value=\"class\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"UsuarioServiceTest\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"usuarios\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.bomberos.usuarios.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <option name=\"PACKAGE_NAME\" value=\"com.bomberos.usuarios\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.bomberos.usuarios.UsuarioServiceTest\" />\r\n      <option name=\"TEST_OBJECT\" value=\"class\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"UsuariosApplicationTests\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"usuarios\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.bomberos.usuarios.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <option name=\"PACKAGE_NAME\" value=\"com.bomberos.usuarios\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.bomberos.usuarios.UsuariosApplicationTests\" />\r\n      <option name=\"TEST_OBJECT\" value=\"class\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"AlertasApplication\" type=\"SpringBootApplicationConfigurationType\" factoryName=\"Spring Boot\" nameIsGenerated=\"true\">\r\n      <module name=\"alertas\" />\r\n      <option name=\"SPRING_BOOT_MAIN_CLASS\" value=\"com.bomberos.alertas.AlertasApplication\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"ApiGatewayApplication\" type=\"SpringBootApplicationConfigurationType\" factoryName=\"Spring Boot\" nameIsGenerated=\"true\">\r\n      <module name=\"api-gateway\" />\r\n      <option name=\"SPRING_BOOT_MAIN_CLASS\" value=\"com.bomberos.api_gateway.ApiGatewayApplication\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"EurekaserverApplication\" type=\"SpringBootApplicationConfigurationType\" factoryName=\"Spring Boot\" nameIsGenerated=\"true\">\r\n      <module name=\"eureka-server\" />\r\n      <option name=\"SPRING_BOOT_MAIN_CLASS\" value=\"com.backend.eurekaserver.EurekaserverApplication\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"HistorialApplication\" type=\"SpringBootApplicationConfigurationType\" factoryName=\"Spring Boot\" nameIsGenerated=\"true\">\r\n      <module name=\"historial\" />\r\n      <option name=\"SPRING_BOOT_MAIN_CLASS\" value=\"com.bomberos.historial.HistorialApplication\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"MonitoreoApplication\" type=\"SpringBootApplicationConfigurationType\" factoryName=\"Spring Boot\" nameIsGenerated=\"true\">\r\n      <module name=\"monitoreo\" />\r\n      <option name=\"SPRING_BOOT_MAIN_CLASS\" value=\"com.bomberos.monitoreo.MonitoreoApplication\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"ReportesApplication\" type=\"SpringBootApplicationConfigurationType\" factoryName=\"Spring Boot\" nameIsGenerated=\"true\">\r\n      <module name=\"reportes\" />\r\n      <option name=\"SPRING_BOOT_MAIN_CLASS\" value=\"com.bomberos.reportes.ReportesApplication\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"UsuariosApplication\" type=\"SpringBootApplicationConfigurationType\" factoryName=\"Spring Boot\" nameIsGenerated=\"true\">\r\n      <module name=\"usuarios\" />\r\n      <option name=\"SPRING_BOOT_MAIN_CLASS\" value=\"com.bomberos.usuarios.UsuariosApplication\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <recent_temporary>\r\n      <list>\r\n        <item itemvalue=\"JUnit.UsuarioServiceTest\" />\r\n        <item itemvalue=\"JUnit.UsuariosApplicationTests\" />\r\n        <item itemvalue=\"JUnit.UsuarioControllerTest\" />\r\n        <item itemvalue=\"JUnit.ProductosfsApplicationTests\" />\r\n        <item itemvalue=\"JUnit.ReporteServiceTest\" />\r\n      </list>\r\n    </recent_temporary>\r\n  </component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.26927.53\" />\r\n        <option value=\"bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-IU-251.26927.53\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"736d2750-17bc-4bca-89a5-50cdba288114\" name=\"Changes\" comment=\"\" />\r\n      <created>1775521601700</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1775521601700</updated>\r\n      <workItem from=\"1775521602991\" duration=\"418000\" />\r\n      <workItem from=\"1775972416877\" duration=\"562000\" />\r\n      <workItem from=\"1776042383294\" duration=\"718000\" />\r\n      <workItem from=\"1776136555827\" duration=\"2674000\" />\r\n      <workItem from=\"1776804995027\" duration=\"122000\" />\r\n      <workItem from=\"1777392931790\" duration=\"305000\" />\r\n      <workItem from=\"1777419826145\" duration=\"649000\" />\r\n      <workItem from=\"1777420530451\" duration=\"93000\" />\r\n      <workItem from=\"1778644720426\" duration=\"573000\" />\r\n      <workItem from=\"1779223335729\" duration=\"3791000\" />\r\n    </task>\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision a9cdb7761f11b9eaca6a896726b080421634105f)
++++ b/.idea/workspace.xml	(date 1781123249168)
+@@ -5,35 +5,55 @@
+   </component>
+   <component name="ChangeListManager">
+     <list default="true" id="736d2750-17bc-4bca-89a5-50cdba288114" name="Changes" comment="">
+-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.ask2agent.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.idea/discord.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/.idea/bomberos.iml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/.idea/compiler.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/.idea/dataSources.local.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/.idea/dataSources.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/.idea/encodings.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/.idea/jarRepositories.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/.idea/misc.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/.idea/modules.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/.idea/vcs.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/reportes/src/test/java/com/bomberos/reportes/ReporteControllerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/reportes/src/test/java/com/bomberos/reportes/ReporteControllerTest.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/reportes/src/test/java/com/bomberos/reportes/ReporteServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/reportes/src/test/java/com/bomberos/reportes/ReporteServiceTest.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/bomberos/usuarios/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/usuarios/pom.xml" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/bomberos/alertas/src/main/java/com/bomberos/alertas/config/RabbitMQConfig.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/bomberos/alertas/src/main/java/com/bomberos/alertas/messaging/AlertaConsumer.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/bomberos/historial/src/main/java/com/bomberos/historial/config/RabbitMQConfig.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/bomberos/historial/src/main/java/com/bomberos/historial/messaging/HistorialConsumer.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/bomberos/reportes/src/main/java/com/bomberos/reportes/config/RabbitMQConfig.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/bomberos/reportes/src/main/java/com/bomberos/reportes/messaging/ReporteProducer.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/bomberos/alertas/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/alertas/pom.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/bomberos/alertas/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/alertas/src/main/resources/application.yml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/bomberos/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/docker-compose.yml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/bomberos/historial/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/historial/pom.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/bomberos/historial/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/historial/src/main/resources/application.yml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/bomberos/reportes/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/reportes/pom.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/bomberos/reportes/src/main/java/com/bomberos/reportes/controller/ReporteController.java" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/reportes/src/main/java/com/bomberos/reportes/controller/ReporteController.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/bomberos/reportes/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/bomberos/reportes/src/main/resources/application.yml" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+     <option name="LAST_RESOLUTION" value="IGNORE" />
++  </component>
++  <component name="CopilotPersistence">
++    <persistenceIdMap>
++      <entry key="_C:/Users/Rodrigo/Desktop/FULLSTACK/Caso_semetral_FS" value="3C0TgitxMcHLZu99f7YaaSynHwm" />
++    </persistenceIdMap>
+   </component>
+   <component name="Git.Settings">
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+   </component>
++  <component name="GitHubPullRequestSearchHistory">{
++  &quot;lastFilter&quot;: {
++    &quot;state&quot;: &quot;OPEN&quot;,
++    &quot;assignee&quot;: &quot;Rodrigoruiz12&quot;
++  }
++}</component>
++  <component name="GithubPullRequestsUISettings">{
++  &quot;selectedUrlAndAccountId&quot;: {
++    &quot;url&quot;: &quot;https://github.com/lobyte2/Caso_semetral_FS.git&quot;,
++    &quot;accountId&quot;: &quot;fc8d88d2-578f-4451-a93e-cb92224544db&quot;
++  }
++}</component>
+   <component name="KubernetesApiPersistence">{}</component>
+   <component name="KubernetesApiProvider">{
+   &quot;isMigrated&quot;: true
+ }</component>
++  <component name="McpProjectServerCommands">
++    <commands />
++    <urls />
++  </component>
+   <component name="ProjectColorInfo">{
+   &quot;customColor&quot;: &quot;&quot;,
+   &quot;associatedIndex&quot;: 6
+@@ -43,48 +63,52 @@
+     <option name="hideEmptyMiddlePackages" value="true" />
+     <option name="showLibraryContents" value="true" />
+   </component>
+-  <component name="PropertiesComponent"><![CDATA[{
+-  "keyToString": {
+-    "JUnit.AlertaControllerTest.executor": "Run",
+-    "JUnit.AlertasApplicationTests.executor": "Run",
+-    "JUnit.ProductosfsApplicationTests.executor": "Run",
+-    "JUnit.ReporteControllerTest.executor": "Run",
+-    "JUnit.ReporteServiceTest.executor": "Run",
+-    "JUnit.UsuarioControllerTest.executor": "Run",
+-    "JUnit.UsuarioServiceTest.executor": "Run",
+-    "JUnit.UsuariosApplicationTests.executor": "Run",
+-    "Maven.alertas [clean].executor": "Run",
+-    "Maven.alertas [test].executor": "Run",
+-    "Maven.alertas [verify].executor": "Run",
+-    "Maven.historial [clean].executor": "Run",
+-    "Maven.historial [test].executor": "Run",
+-    "Maven.historial [verify].executor": "Run",
+-    "Maven.monitoreo [clean].executor": "Run",
+-    "Maven.monitoreo [test].executor": "Run",
+-    "Maven.monitoreo [verify].executor": "Run",
+-    "Maven.reportes [clean].executor": "Run",
+-    "Maven.reportes [test].executor": "Run",
+-    "Maven.reportes [verify].executor": "Run",
+-    "Maven.usuarios [clean].executor": "Run",
+-    "Maven.usuarios [test].executor": "Run",
+-    "Maven.usuarios [verify].executor": "Run",
+-    "ModuleVcsDetector.initialDetectionPerformed": "true",
+-    "RunOnceActivity.ShowReadmeOnStart": "true",
+-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+-    "RunOnceActivity.git.unshallow": "true",
+-    "git-widget-placeholder": "main",
+-    "node.js.detected.package.eslint": "true",
+-    "node.js.detected.package.tslint": "true",
+-    "node.js.selected.package.eslint": "(autodetect)",
+-    "node.js.selected.package.tslint": "(autodetect)",
+-    "nodejs_package_manager_path": "npm",
+-    "project.structure.last.edited": "Project",
+-    "project.structure.proportion": "0.0",
+-    "project.structure.side.proportion": "0.0",
+-    "run.configurations.included.in.services": "true",
+-    "vue.rearranger.settings.migration": "true"
++  <component name="PropertiesComponent">{
++  &quot;keyToString&quot;: {
++    &quot;JUnit.AlertaControllerTest.executor&quot;: &quot;Run&quot;,
++    &quot;JUnit.AlertasApplicationTests.executor&quot;: &quot;Run&quot;,
++    &quot;JUnit.ProductosfsApplicationTests.executor&quot;: &quot;Run&quot;,
++    &quot;JUnit.ReporteControllerTest.executor&quot;: &quot;Run&quot;,
++    &quot;JUnit.ReporteServiceTest.executor&quot;: &quot;Run&quot;,
++    &quot;JUnit.UsuarioControllerTest.executor&quot;: &quot;Run&quot;,
++    &quot;JUnit.UsuarioServiceTest.executor&quot;: &quot;Run&quot;,
++    &quot;JUnit.UsuariosApplicationTests.executor&quot;: &quot;Run&quot;,
++    &quot;Maven.alertas [clean].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.alertas [test].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.alertas [verify].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.historial [clean].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.historial [test].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.historial [verify].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.monitoreo [clean].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.monitoreo [test].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.monitoreo [verify].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.reportes [clean].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.reportes [test].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.reportes [verify].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.usuarios [clean].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.usuarios [test].executor&quot;: &quot;Run&quot;,
++    &quot;Maven.usuarios [verify].executor&quot;: &quot;Run&quot;,
++    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
++    &quot;git-widget-placeholder&quot;: &quot;feature/rabbitMQ&quot;,
++    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
++    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
++    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
++    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
++    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
++    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
++    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
++    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
++    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
++    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
++    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+   }
+-}]]></component>
++}</component>
+   <component name="RunDashboard">
+     <option name="configurationTypes">
+       <set>
+@@ -233,8 +257,8 @@
+   <component name="SharedIndexes">
+     <attachedChunks>
+       <set>
+-        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.26927.53" />
+-        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-IU-251.26927.53" />
++        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.32098.101" />
++        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.32098.101" />
+       </set>
+     </attachedChunks>
+   </component>
+@@ -255,6 +279,8 @@
+       <workItem from="1777420530451" duration="93000" />
+       <workItem from="1778644720426" duration="573000" />
+       <workItem from="1779223335729" duration="3791000" />
++      <workItem from="1781118903508" duration="3226000" />
++      <workItem from="1781123225621" duration="24000" />
+     </task>
+     <servers />
+   </component>
+Index: bomberos/historial/src/main/java/com/bomberos/historial/config/RabbitMQConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/historial/src/main/java/com/bomberos/historial/config/RabbitMQConfig.java b/bomberos/historial/src/main/java/com/bomberos/historial/config/RabbitMQConfig.java
+new file mode 100644
+--- /dev/null	(date 1781111579622)
++++ b/bomberos/historial/src/main/java/com/bomberos/historial/config/RabbitMQConfig.java	(date 1781111579622)
+@@ -0,0 +1,31 @@
++package com.bomberos.historial.config;
++
++import org.springframework.amqp.core.Binding;
++import org.springframework.amqp.core.BindingBuilder;
++import org.springframework.amqp.core.Queue;
++import org.springframework.amqp.core.TopicExchange;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++@Configuration
++public class RabbitMQConfig {
++
++    public static final String QUEUE_NAME = "historial.queue";
++    public static final String EXCHANGE_NAME = "bomberos.exchange";
++    public static final String ROUTING_KEY = "reporte.*";
++
++    @Bean
++    public Queue queue() {
++        return new Queue(QUEUE_NAME, true);
++    }
++
++    @Bean
++    public TopicExchange exchange() {
++        return new TopicExchange(EXCHANGE_NAME);
++    }
++
++    @Bean
++    public Binding binding(Queue queue, TopicExchange exchange) {
++        return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
++    }
++}
+Index: bomberos/historial/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n\t\t xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n\t<modelVersion>4.0.0</modelVersion>\r\n\t<parent>\r\n\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\r\n\t\t<version>3.2.3</version> <relativePath/>\r\n\t</parent>\r\n\t<groupId>com.bomberos</groupId>\r\n\t<artifactId>historial</artifactId>\r\n\t<version>0.0.1-SNAPSHOT</version>\r\n\t<name>servicio-historial</name>\r\n\r\n\t<properties>\r\n\t\t<java.version>21</java.version>\r\n\t\t<java.version>21</java.version>\r\n\t\t<spring-cloud.version>2023.0.0</spring-cloud.version>\r\n\t</properties>\r\n\r\n\t<dependencies>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-data-jpa</artifactId>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-validation</artifactId>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.cloud</groupId>\r\n\t\t\t<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>\r\n\t\t\t<version>4.1.0</version>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-web</artifactId>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.postgresql</groupId>\r\n\t\t\t<artifactId>postgresql</artifactId>\r\n\t\t\t<scope>runtime</scope>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-test</artifactId>\r\n\t\t\t<scope>test</scope>\r\n\t\t</dependency>\r\n        <dependency>\r\n            <groupId>org.springframework.cloud</groupId>\r\n            <artifactId>spring-cloud-commons</artifactId>\r\n            <version>5.0.1</version>\r\n            <scope>compile</scope>\r\n        </dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springdoc</groupId>\r\n\t\t\t<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>\r\n\t\t\t<version>2.3.0</version>\r\n\t\t</dependency>\r\n    </dependencies>\r\n\r\n\t<build>\r\n\t\t<plugins>\r\n\t\t\t<plugin>\r\n\t\t\t\t<groupId>org.jacoco</groupId>\r\n\t\t\t\t<artifactId>jacoco-maven-plugin</artifactId>\r\n\t\t\t\t<version>0.8.12</version>\r\n\t\t\t\t<configuration>\r\n\t\t\t\t\t<excludes>\r\n\t\t\t\t\t\t<!-- Ajusta estos paquetes al nombre de TU proyecto -->\r\n\t\t\t\t\t\t<exclude>cl/duoc/tuprojecto/TuClaseApplication.class</exclude>\r\n\t\t\t\t\t\t<exclude>cl/duoc/tuprojecto/controller/*.class</exclude>\r\n\t\t\t\t\t</excludes>\r\n\t\t\t\t</configuration>\r\n\t\t\t\t<executions>\r\n\t\t\t\t\t<execution>\r\n\t\t\t\t\t\t<id>prepare-agent</id>\r\n\t\t\t\t\t\t<goals><goal>prepare-agent</goal></goals>\r\n\t\t\t\t\t</execution>\r\n\t\t\t\t\t<execution>\r\n\t\t\t\t\t\t<id>report</id>\r\n\t\t\t\t\t\t<phase>test</phase>\r\n\t\t\t\t\t\t<goals><goal>report</goal></goals>\r\n\t\t\t\t\t</execution>\r\n\t\t\t\t\t<execution>\r\n\t\t\t\t\t\t<id>check-coverage</id>\r\n\t\t\t\t\t\t<phase>verify</phase>\r\n\t\t\t\t\t\t<goals><goal>check</goal></goals>\r\n\t\t\t\t\t\t<configuration>\r\n\t\t\t\t\t\t\t<rules>\r\n\t\t\t\t\t\t\t\t<rule>\r\n\t\t\t\t\t\t\t\t\t<element>BUNDLE</element>\r\n\t\t\t\t\t\t\t\t\t<limits>\r\n\t\t\t\t\t\t\t\t\t\t<limit>\r\n\t\t\t\t\t\t\t\t\t\t\t<counter>LINE</counter>\r\n\t\t\t\t\t\t\t\t\t\t\t<value>COVEREDRATIO</value>\r\n\t\t\t\t\t\t\t\t\t\t\t<minimum>0.80</minimum>\r\n\t\t\t\t\t\t\t\t\t\t</limit>\r\n\t\t\t\t\t\t\t\t\t\t<limit>\r\n\t\t\t\t\t\t\t\t\t\t\t<counter>BRANCH</counter>\r\n\t\t\t\t\t\t\t\t\t\t\t<value>COVEREDRATIO</value>\r\n\t\t\t\t\t\t\t\t\t\t\t<minimum>0.80</minimum>\r\n\t\t\t\t\t\t\t\t\t\t</limit>\r\n\t\t\t\t\t\t\t\t\t</limits>\r\n\t\t\t\t\t\t\t\t</rule>\r\n\t\t\t\t\t\t\t</rules>\r\n\t\t\t\t\t\t</configuration>\r\n\t\t\t\t\t</execution>\r\n\t\t\t\t</executions>\r\n\t\t\t</plugin>\r\n\t\t\t<plugin>\r\n\t\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\r\n\t\t\t</plugin>\r\n\t\t</plugins>\r\n\t</build>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/historial/pom.xml b/bomberos/historial/pom.xml
+--- a/bomberos/historial/pom.xml	(revision a9cdb7761f11b9eaca6a896726b080421634105f)
++++ b/bomberos/historial/pom.xml	(date 1781111485967)
+@@ -37,6 +37,10 @@
+ 			<artifactId>spring-boot-starter-web</artifactId>
+ 		</dependency>
+ 		<dependency>
++			<groupId>org.springframework.boot</groupId>
++			<artifactId>spring-boot-starter-amqp</artifactId>
++		</dependency>
++		<dependency>
+ 			<groupId>org.postgresql</groupId>
+ 			<artifactId>postgresql</artifactId>
+ 			<scope>runtime</scope>
+Index: bomberos/historial/src/main/java/com/bomberos/historial/messaging/HistorialConsumer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/historial/src/main/java/com/bomberos/historial/messaging/HistorialConsumer.java b/bomberos/historial/src/main/java/com/bomberos/historial/messaging/HistorialConsumer.java
+new file mode 100644
+--- /dev/null	(date 1781111579691)
++++ b/bomberos/historial/src/main/java/com/bomberos/historial/messaging/HistorialConsumer.java	(date 1781111579691)
+@@ -0,0 +1,17 @@
++package com.bomberos.historial.messaging;
++
++import com.bomberos.historial.config.RabbitMQConfig;
++import org.springframework.amqp.rabbit.annotation.RabbitListener;
++import org.springframework.stereotype.Service;
++
++@Service
++public class HistorialConsumer {
++
++    @RabbitListener(queues = RabbitMQConfig.QUEUE_NAME)
++    public void recibirMensaje(String mensaje) {
++        System.out.println("----------------------------------------");
++        System.out.println("[HISTORIAL] Mensaje recibido de RabbitMQ:");
++        System.out.println("Registrando en historial el evento: " + mensaje);
++        System.out.println("----------------------------------------");
++    }
++}
+Index: bomberos/historial/src/main/resources/application.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>server:\r\n  port: ${SERVER_PORT:8084}\r\n\r\nspring:\r\n  application:\r\n    name: ms-historial\r\n  cloud:\r\n    compatibility-verifier:\r\n      enabled: false\r\n  datasource:\r\n    url: jdbc:postgresql://aws-1-us-east-1.pooler.supabase.com:5432/postgres\r\n    username: postgres.geijpkyhyeguxhsoynvv\r\n    password: frMQ_-FQyG9J5Ep\r\n    driver-class-name: org.postgresql.Driver\r\n    hikari:\r\n      maximum-pool-size: 2\r\n      minimum-idle: 1\r\n      idle-timeout: 10000\r\n  jpa:\r\n    show-sql: true\r\n    hibernate:\r\n      ddl-auto: update\r\n    properties:\r\n      hibernate:\r\n        dialect: org.hibernate.dialect.PostgreSQLDialect\r\n\r\neureka:\r\n  client:\r\n    service-url:\r\n      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}\r\n  instance:\r\n    prefer-ip-address: true\r\n\r\nmanagement:\r\n  endpoints:\r\n    web:\r\n      exposure:\r\n        include: health,info\r\n  endpoint:\r\n    health:\r\n      show-details: always
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/historial/src/main/resources/application.yml b/bomberos/historial/src/main/resources/application.yml
+--- a/bomberos/historial/src/main/resources/application.yml	(revision a9cdb7761f11b9eaca6a896726b080421634105f)
++++ b/bomberos/historial/src/main/resources/application.yml	(date 1781111523802)
+@@ -2,6 +2,11 @@
+   port: ${SERVER_PORT:8084}
+ 
+ spring:
++  rabbitmq:
++    host: ${RABBITMQ_HOST:localhost}
++    port: ${RABBITMQ_PORT:5672}
++    username: ${RABBITMQ_USER:guest}
++    password: ${RABBITMQ_PASS:guest}
+   application:
+     name: ms-historial
+   cloud:
+Index: bomberos/reportes/src/main/java/com/bomberos/reportes/config/RabbitMQConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/reportes/src/main/java/com/bomberos/reportes/config/RabbitMQConfig.java b/bomberos/reportes/src/main/java/com/bomberos/reportes/config/RabbitMQConfig.java
+new file mode 100644
+--- /dev/null	(date 1781111562232)
++++ b/bomberos/reportes/src/main/java/com/bomberos/reportes/config/RabbitMQConfig.java	(date 1781111562232)
+@@ -0,0 +1,16 @@
++package com.bomberos.reportes.config;
++
++import org.springframework.amqp.core.TopicExchange;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++@Configuration
++public class RabbitMQConfig {
++
++    public static final String EXCHANGE_NAME = "bomberos.exchange";
++
++    @Bean
++    public TopicExchange exchange() {
++        return new TopicExchange(EXCHANGE_NAME);
++    }
++}
+Index: bomberos/reportes/src/main/resources/application.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>server:\r\n  port: ${SERVER_PORT:8080}\r\n\r\nspring:\r\n  application:\r\n    name: ms-reportes\r\n  cloud:\r\n    compatibility-verifier:\r\n      enabled: false\r\n  datasource:\r\n    url: jdbc:postgresql://aws-1-us-east-1.pooler.supabase.com:5432/postgres\r\n    username: postgres.geijpkyhyeguxhsoynvv\r\n    password: frMQ_-FQyG9J5Ep\r\n    driver-class-name: org.postgresql.Driver\r\n    hikari:\r\n      maximum-pool-size: 2\r\n      minimum-idle: 1\r\n      idle-timeout: 10000\r\n  jpa:\r\n    show-sql: true\r\n    hibernate:\r\n      ddl-auto: update\r\n    properties:\r\n      hibernate:\r\n        dialect: org.hibernate.dialect.PostgreSQLDialect\r\n\r\neureka:\r\n  client:\r\n    service-url:\r\n      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}\r\n  instance:\r\n    prefer-ip-address: true\r\n\r\nmanagement:\r\n  endpoints:\r\n    web:\r\n      exposure:\r\n        include: health,info\r\n  endpoint:\r\n    health:\r\n      show-details: always
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/reportes/src/main/resources/application.yml b/bomberos/reportes/src/main/resources/application.yml
+--- a/bomberos/reportes/src/main/resources/application.yml	(revision a9cdb7761f11b9eaca6a896726b080421634105f)
++++ b/bomberos/reportes/src/main/resources/application.yml	(date 1781111510737)
+@@ -2,6 +2,11 @@
+   port: ${SERVER_PORT:8080}
+ 
+ spring:
++  rabbitmq:
++    host: ${RABBITMQ_HOST:localhost}
++    port: ${RABBITMQ_PORT:5672}
++    username: ${RABBITMQ_USER:guest}
++    password: ${RABBITMQ_PASS:guest}
+   application:
+     name: ms-reportes
+   cloud:
+Index: bomberos/reportes/src/main/java/com/bomberos/reportes/messaging/ReporteProducer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/reportes/src/main/java/com/bomberos/reportes/messaging/ReporteProducer.java b/bomberos/reportes/src/main/java/com/bomberos/reportes/messaging/ReporteProducer.java
+new file mode 100644
+--- /dev/null	(date 1781111562350)
++++ b/bomberos/reportes/src/main/java/com/bomberos/reportes/messaging/ReporteProducer.java	(date 1781111562350)
+@@ -0,0 +1,18 @@
++package com.bomberos.reportes.messaging;
++
++import com.bomberos.reportes.config.RabbitMQConfig;
++import org.springframework.amqp.rabbit.core.RabbitTemplate;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.stereotype.Service;
++
++@Service
++public class ReporteProducer {
++
++    @Autowired
++    private RabbitTemplate rabbitTemplate;
++
++    public void enviarReporteCreado(String mensaje) {
++        System.out.println("Enviando mensaje a RabbitMQ: " + mensaje);
++        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "reporte.creado", mensaje);
++    }
++}
+Index: bomberos/alertas/src/main/java/com/bomberos/alertas/config/RabbitMQConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/alertas/src/main/java/com/bomberos/alertas/config/RabbitMQConfig.java b/bomberos/alertas/src/main/java/com/bomberos/alertas/config/RabbitMQConfig.java
+new file mode 100644
+--- /dev/null	(date 1781111571345)
++++ b/bomberos/alertas/src/main/java/com/bomberos/alertas/config/RabbitMQConfig.java	(date 1781111571345)
+@@ -0,0 +1,31 @@
++package com.bomberos.alertas.config;
++
++import org.springframework.amqp.core.Binding;
++import org.springframework.amqp.core.BindingBuilder;
++import org.springframework.amqp.core.Queue;
++import org.springframework.amqp.core.TopicExchange;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++@Configuration
++public class RabbitMQConfig {
++
++    public static final String QUEUE_NAME = "alertas.queue";
++    public static final String EXCHANGE_NAME = "bomberos.exchange";
++    public static final String ROUTING_KEY = "reporte.*";
++
++    @Bean
++    public Queue queue() {
++        return new Queue(QUEUE_NAME, true);
++    }
++
++    @Bean
++    public TopicExchange exchange() {
++        return new TopicExchange(EXCHANGE_NAME);
++    }
++
++    @Bean
++    public Binding binding(Queue queue, TopicExchange exchange) {
++        return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
++    }
++}
+Index: bomberos/reportes/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n\t\t xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n\t<modelVersion>4.0.0</modelVersion>\r\n\r\n\t<parent>\r\n\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t<artifactId>spring-boot-starter-parent</artifactId>\r\n\t\t<version>3.2.3</version>\r\n\t\t<relativePath/>\r\n\t</parent>\r\n\r\n\t<groupId>com.municipalidad.bomberos</groupId>\r\n\t<artifactId>reportes</artifactId>\r\n\t<version>0.0.1-SNAPSHOT</version>\r\n\t<name>servicio-reportes</name>\r\n\t<description>Microservicio de Reportes - Proyecto Bomberos (Municipalidad Valle del Sol)</description>\r\n\t<url/>\r\n\r\n\t<licenses>\r\n\t\t<license/>\r\n\t</licenses>\r\n\t<developers>\r\n\t\t<developer/>\r\n\t</developers>\r\n\t<scm>\r\n\t\t<connection/>\r\n\t\t<developerConnection/>\r\n\t\t<tag/>\r\n\t\t<url/>\r\n\t</scm>\r\n\r\n\t<properties>\r\n\t\t<java.version>21</java.version>\r\n\t</properties>\r\n\r\n\t<dependencies>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-data-jpa</artifactId>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-validation</artifactId>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.cloud</groupId>\r\n\t\t\t<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>\r\n\t\t\t<version>4.1.0</version>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-web</artifactId>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.postgresql</groupId>\r\n\t\t\t<artifactId>postgresql</artifactId>\r\n\t\t\t<scope>runtime</scope>\r\n\t\t</dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t<artifactId>spring-boot-starter-test</artifactId>\r\n\t\t\t<scope>test</scope>\r\n\t\t</dependency>\r\n        <dependency>\r\n            <groupId>org.springframework.cloud</groupId>\r\n            <artifactId>spring-cloud-commons</artifactId>\r\n            <version>5.0.1</version>\r\n            <scope>compile</scope>\r\n        </dependency>\r\n\t\t<dependency>\r\n\t\t\t<groupId>org.springdoc</groupId>\r\n\t\t\t<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>\r\n\t\t\t<version>2.3.0</version>\r\n\t\t</dependency>\r\n    </dependencies>\r\n\r\n\t<build>\r\n\t\t<plugins>\r\n\t\t\t<plugin>\r\n\t\t\t\t<groupId>org.jacoco</groupId>\r\n\t\t\t\t<artifactId>jacoco-maven-plugin</artifactId>\r\n\t\t\t\t<version>0.8.12</version>\r\n\t\t\t\t<configuration>\r\n\t\t\t\t\t<excludes>\r\n\t\t\t\t\t\t<!-- Ajusta estos paquetes al nombre de TU proyecto -->\r\n\t\t\t\t\t\t<exclude>cl/duoc/tuprojecto/TuClaseApplication.class</exclude>\r\n\t\t\t\t\t\t<exclude>cl/duoc/tuprojecto/controller/*.class</exclude>\r\n\t\t\t\t\t</excludes>\r\n\t\t\t\t</configuration>\r\n\t\t\t\t<executions>\r\n\t\t\t\t\t<execution>\r\n\t\t\t\t\t\t<id>prepare-agent</id>\r\n\t\t\t\t\t\t<goals><goal>prepare-agent</goal></goals>\r\n\t\t\t\t\t</execution>\r\n\t\t\t\t\t<execution>\r\n\t\t\t\t\t\t<id>report</id>\r\n\t\t\t\t\t\t<phase>test</phase>\r\n\t\t\t\t\t\t<goals><goal>report</goal></goals>\r\n\t\t\t\t\t</execution>\r\n\t\t\t\t\t<execution>\r\n\t\t\t\t\t\t<id>check-coverage</id>\r\n\t\t\t\t\t\t<phase>verify</phase>\r\n\t\t\t\t\t\t<goals><goal>check</goal></goals>\r\n\t\t\t\t\t\t<configuration>\r\n\t\t\t\t\t\t\t<rules>\r\n\t\t\t\t\t\t\t\t<rule>\r\n\t\t\t\t\t\t\t\t\t<element>BUNDLE</element>\r\n\t\t\t\t\t\t\t\t\t<limits>\r\n\t\t\t\t\t\t\t\t\t\t<limit>\r\n\t\t\t\t\t\t\t\t\t\t\t<counter>LINE</counter>\r\n\t\t\t\t\t\t\t\t\t\t\t<value>COVEREDRATIO</value>\r\n\t\t\t\t\t\t\t\t\t\t\t<minimum>0.80</minimum>\r\n\t\t\t\t\t\t\t\t\t\t</limit>\r\n\t\t\t\t\t\t\t\t\t\t<limit>\r\n\t\t\t\t\t\t\t\t\t\t\t<counter>BRANCH</counter>\r\n\t\t\t\t\t\t\t\t\t\t\t<value>COVEREDRATIO</value>\r\n\t\t\t\t\t\t\t\t\t\t\t<minimum>0.80</minimum>\r\n\t\t\t\t\t\t\t\t\t\t</limit>\r\n\t\t\t\t\t\t\t\t\t</limits>\r\n\t\t\t\t\t\t\t\t</rule>\r\n\t\t\t\t\t\t\t</rules>\r\n\t\t\t\t\t\t</configuration>\r\n\t\t\t\t\t</execution>\r\n\t\t\t\t</executions>\r\n\t\t\t</plugin>\r\n\t\t\t<plugin>\r\n\t\t\t\t<groupId>org.springframework.boot</groupId>\r\n\t\t\t\t<artifactId>spring-boot-maven-plugin</artifactId>\r\n\t\t\t</plugin>\r\n\t\t</plugins>\r\n\t</build>\r\n\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/reportes/pom.xml b/bomberos/reportes/pom.xml
+--- a/bomberos/reportes/pom.xml	(revision a9cdb7761f11b9eaca6a896726b080421634105f)
++++ b/bomberos/reportes/pom.xml	(date 1781111465838)
+@@ -53,6 +53,10 @@
+ 			<artifactId>spring-boot-starter-web</artifactId>
+ 		</dependency>
+ 		<dependency>
++			<groupId>org.springframework.boot</groupId>
++			<artifactId>spring-boot-starter-amqp</artifactId>
++		</dependency>
++		<dependency>
+ 			<groupId>org.postgresql</groupId>
+ 			<artifactId>postgresql</artifactId>
+ 			<scope>runtime</scope>
+Index: bomberos/alertas/src/main/java/com/bomberos/alertas/messaging/AlertaConsumer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bomberos/alertas/src/main/java/com/bomberos/alertas/messaging/AlertaConsumer.java b/bomberos/alertas/src/main/java/com/bomberos/alertas/messaging/AlertaConsumer.java
+new file mode 100644
+--- /dev/null	(date 1781115679594)
++++ b/bomberos/alertas/src/main/java/com/bomberos/alertas/messaging/AlertaConsumer.java	(date 1781115679594)
+@@ -0,0 +1,29 @@
++package com.bomberos.alertas.messaging;
++
++import com.bomberos.alertas.config.RabbitMQConfig;
++import com.bomberos.alertas.service.EmailService;
++import org.springframework.amqp.rabbit.annotation.RabbitListener;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.stereotype.Service;
++
++@Service
++public class AlertaConsumer {
++
++    @Autowired
++    private EmailService emailService;
++
++    @RabbitListener(queues = RabbitMQConfig.QUEUE_NAME)
++    public void recibirMensaje(String mensaje) {
++        System.out.println("----------------------------------------");
++        System.out.println("[ALERTA] Mensaje recibido de RabbitMQ:");
++        System.out.println("Enviando notificación por correo para el evento...");
++        
++        // Aquí puedes cambiar el correo de destino por el que necesites
++        String destinatario = "admin.bomberos@yopmail.com"; 
++        String asunto = "¡Nueva Alerta de Emergencia!";
++        
++        emailService.enviarCorreo(destinatario, asunto, mensaje);
++        
++        System.out.println("----------------------------------------");
++    }
++}

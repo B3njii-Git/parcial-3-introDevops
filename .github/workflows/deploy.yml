@@ -1,0 +1,92 @@
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1                   # Región de AWS Academy (us-east-1 por defecto)
+  ECR_REPOSITORY_FRONT: frontend-repo     # Nombre del repositorio ECR del Frontend
+  ECR_REPOSITORY_BACK: backend-repo       # Nombre del repositorio ECR del Backend
+  ECS_CLUSTER: BomberosCluster            # Nombre del clúster ECS
+  ECS_SERVICE_FRONT: frontend-service     # Nombre del servicio ECS Frontend
+  ECS_SERVICE_BACK: backend-service       # Nombre del servicio ECS Backend
+  ECS_TASK_DEFINITION_FRONT: .aws/task-def-frontend.json
+  ECS_TASK_DEFINITION_BACK: .aws/task-def-backend.json
+
+jobs:
+  deploy:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout del código
+      uses: actions/checkout@v4
+
+    - name: Configurar credenciales de AWS
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Obligatorio en AWS Academy
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Iniciar sesión en Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, y push Frontend a ECR
+      id: build-image-front
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd fron_semestralFS3
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONT:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONT:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_FRONT:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Build, tag, y push Backend (API Gateway) a ECR
+      id: build-image-back
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd Caso_semetral_FS/bomberos/api-gateway
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_BACK:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACK:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_BACK:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Actualizar Task Definition del Frontend
+      id: task-def-front
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: ${{ env.ECS_TASK_DEFINITION_FRONT }}
+        container-name: frontend-container
+        image: ${{ steps.build-image-front.outputs.image }}
+
+    - name: Desplegar Frontend en ECS
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def-front.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE_FRONT }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
+
+    - name: Actualizar Task Definition del Backend
+      id: task-def-back
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: ${{ env.ECS_TASK_DEFINITION_BACK }}
+        container-name: backend-container
+        image: ${{ steps.build-image-back.outputs.image }}
+
+    - name: Desplegar Backend en ECS
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def-back.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE_BACK }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true

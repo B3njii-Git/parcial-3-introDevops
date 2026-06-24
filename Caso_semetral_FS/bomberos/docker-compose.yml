@@ -1,0 +1,183 @@
+services:
+  # 1. El Directorio (Debe iniciar primero)
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      SERVER_PORT: 8761
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8761/ || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - bomberos-net
+
+  # 2. API Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway-service
+    ports:
+      - "9090:9090"
+    environment:
+      SERVER_PORT: 9090
+      EUREKA_URL: http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9090/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - bomberos-net
+
+  # 3. Servicio de Usuarios
+  usuarios:
+    build: ./usuarios
+    container_name: usuarios-service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      EUREKA_URL: http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - bomberos-net
+
+  # 4. Servicio de Reportes
+  reportes:
+    build: ./reportes
+    container_name: reportes-service
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - bomberos-net
+
+  # 5. Servicio de Monitoreo
+  monitoreo:
+    build: ./monitoreo
+    container_name: monitoreo-service
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      EUREKA_URL: http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - bomberos-net
+
+  # 6. Servicio de Alertas
+  alertas:
+    build: ./alertas
+    container_name: alertas-service
+    ports:
+      - "8083:8083"
+    environment:
+      SERVER_PORT: 8083
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - bomberos-net
+
+  # 7. Servicio de Historial
+  historial:
+    build: ./historial
+    container_name: historial-service
+    ports:
+      - "8084:8084"
+    environment:
+      SERVER_PORT: 8084
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - bomberos-net
+
+  # 8. Redis Caché
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - bomberos-net
+
+  # 9. RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-broker
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - bomberos-net
+
+networks:
+  bomberos-net:
+    driver: bridge

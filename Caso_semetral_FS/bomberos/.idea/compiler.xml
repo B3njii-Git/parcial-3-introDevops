@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="alertas" target="21" />
+      <module name="api-gateway" target="21" />
+      <module name="eureka-server" target="17" />
+      <module name="historial" target="21" />
+      <module name="monitoreo" target="21" />
+      <module name="reportes" target="21" />
+      <module name="usuarios" target="21" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

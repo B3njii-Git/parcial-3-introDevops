@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Helvetica Neue", Helvetica, Arial, "Inter", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  
+  --color-emergency: #FF3B30;
+  --color-forest: #34C759;
+  
+  --color-charcoal: var(--theme-charcoal);
+  --color-dark-bg: var(--theme-dark-bg);
+  --color-pure-white: var(--theme-pure-white);
+  
+  --color-white: var(--theme-white);
+  --color-black: var(--theme-black);
+}
+
+:root {
+  /* LIGHT MODE VARIABLES */
+  --theme-charcoal: #f3f4f6;
+  --theme-dark-bg: #ffffff;
+  --theme-pure-white: #111827;
+  --theme-white: #000000; /* Invert white utility to black for contrast */
+  --theme-black: #ffffff; /* Invert black utility to white */
+}
+
+.dark {
+  /* DARK MODE VARIABLES */
+  --theme-charcoal: #121417;
+  --theme-dark-bg: #0A0B0D;
+  --theme-pure-white: #FFFFFF;
+  --theme-white: #ffffff;
+  --theme-black: #000000;
+}
+
+@layer base {
+  body {
+    @apply bg-charcoal text-pure-white selection:bg-emergency/30 transition-colors duration-300;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/[0.08] backdrop-blur-md border border-white/[0.12];
+  }
+  
+  .glass-dark {
+    @apply bg-dark-bg/80 backdrop-blur-xl border border-white/[0.12];
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px currentColor;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

@@ -36,8 +36,11 @@ export function Login({ onLogin }: LoginProps) {
             // 1. Llamada real de Autenticación al backend
             const userData = await api.login(email, password);
             
+            // MAPEO: Si el backend devuelve BRIGADISTA, lo tratamos como ADMIN
+            const normalizedRole = userData.rol === 'BRIGADISTA' ? 'ADMIN' : userData.rol;
+            
             // 2. ¡NUEVO! Validamos que el rol de la Base de Datos coincida con la pestaña seleccionada
-            if (userData.rol !== role) {
+            if (normalizedRole !== role) {
                 // Si eligió mal la pestaña, lo bloqueamos
                 const nombreRolPantalla = role === 'ADMIN' ? 'Brigadista' : 'Comunidad';
                 alert(`Acceso denegado: Esta cuenta no tiene permisos de ${nombreRolPantalla}. Por favor, selecciona la pestaña correcta.`);
@@ -48,8 +51,8 @@ export function Login({ onLogin }: LoginProps) {
             // 3. Si las credenciales y la pestaña son correctas, recordamos el email localmente
             localStorage.setItem('vsol_remembered_email', userData.email);
             
-            // Iniciamos sesión inyectando el ROL REAL entregado por el backend (Autorización)
-            onLogin(userData.email, userData.rol as UserRole);
+            // Iniciamos sesión inyectando el ROL NORMALIZADO
+            onLogin(userData.email, normalizedRole as UserRole);
             
         } catch (error) {
             console.error("Error al iniciar sesión:", error);

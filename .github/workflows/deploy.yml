@@ -18,8 +18,66 @@ env:
   ECS_TASK_DEFINITION_BACK: .aws/task-def-backend.json
 
 jobs:
+  # --- FASE DE INTEGRACIÓN CONTINUA (CI) ---
+  
+  frontend-ci:
+    name: Frontend CI (Pruebas y Linter)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Instalar dependencias
+        run: cd fron_semestralFS3 && npm ci
+      - name: Verificar compilación (TypeScript)
+        run: cd fron_semestralFS3 && npm run lint
+      - name: Ejecutar pruebas unitarias (Vitest)
+        run: cd fron_semestralFS3 && npm run coverage
+
+  backend-ci:
+    name: Backend CI (Pruebas Unitarias Java)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bomberos_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Ejecutar pruebas de Servicio de Usuarios (Maven)
+        run: cd Caso_semetral_FS/bomberos/usuarios && mvn clean test
+      - name: Ejecutar pruebas de API Gateway (Maven)
+        run: cd Caso_semetral_FS/bomberos/api-gateway && mvn clean test
+      - name: Ejecutar pruebas de Eureka Server (Maven)
+        run: cd Caso_semetral_FS/bomberos/eureka-server && mvn clean test
+
+  # --- FASE DE DESPLIEGUE CONTINUO (CD) ---
+
   deploy:
-    name: Deploy to ECS
+    name: Deploy to ECS (Build, Push & Release)
+    needs: [frontend-ci, backend-ci]
     runs-on: ubuntu-latest
     environment: production
 

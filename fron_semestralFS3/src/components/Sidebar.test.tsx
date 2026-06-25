@@ -6,7 +6,7 @@ import { Sidebar } from './Sidebar';
 describe('Sidebar', () => {
   it('renderiza todos los botones de navegación', () => {
     // Le pasamos funciones vacías (vi.fn()) para cumplir con las props requeridas
-    render(<Sidebar onLogout={vi.fn()} activeTab="monitoreo" onTabChange={vi.fn()} />);
+    render(<Sidebar onLogout={vi.fn()} activeTab="monitoreo" onTabChange={vi.fn()} onSettingsClick={vi.fn()} />);
     
     expect(screen.getByText('Zonas Monitoreo')).toBeInTheDocument();
     expect(screen.getByText('Alertas')).toBeInTheDocument();
@@ -16,7 +16,7 @@ describe('Sidebar', () => {
 
   it('llama a onTabChange al hacer click en una pestaña', async () => {
     const mockOnTabChange = vi.fn();
-    render(<Sidebar onLogout={vi.fn()} activeTab="monitoreo" onTabChange={mockOnTabChange} />);
+    render(<Sidebar onLogout={vi.fn()} activeTab="monitoreo" onTabChange={mockOnTabChange} onSettingsClick={vi.fn()} />);
 
     const reportesBtn = screen.getByText('Reportes');
     await userEvent.click(reportesBtn);
@@ -27,7 +27,7 @@ describe('Sidebar', () => {
 
   it('llama a onLogout al hacer click en Cerrar Sesión', async () => {
     const mockLogout = vi.fn();
-    render(<Sidebar onLogout={mockLogout} activeTab="monitoreo" onTabChange={vi.fn()} />);
+    render(<Sidebar onLogout={mockLogout} activeTab="monitoreo" onTabChange={vi.fn()} onSettingsClick={vi.fn()} />);
 
     const logoutBtn = screen.getByText('Cerrar Sesión');
     await userEvent.click(logoutBtn);
